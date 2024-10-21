@@ -9,6 +9,7 @@ const connect = require("./connection/index.js");
 connect();
 
 app.use(express.json());
+app.use(express.static("public"));
 app.use("/api", [todoRouter]);
 
 app.get("/", (req, res) => {
