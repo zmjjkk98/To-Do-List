@@ -3,9 +3,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const todoList = document.getElementById("todo-list");
   const todoTitle = document.getElementById("todo-title");
 
+  const API_URL = "http://localhost:3000/api/todos";
+
   // 서버에서 할일 목록을 불러오는 함수
   const loadTodos = async () => {
-    const response = await fetch("/api/todos");
+    const response = await fetch(API_URL);
     const todos = await response.json();
 
     // 할일 목록을 화면에 출력
@@ -16,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const deleteButton = document.createElement("button");
       deleteButton.textContent = "삭제";
       deleteButton.onclick = async () => {
-        await fetch(`/api/todos/${todo._id}`, {
+        await fetch(`${API_URL}/${todo._id}`, {
           method: "DELETE",
         });
         loadTodos();
@@ -32,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const title = todoTitle.value;
 
     if (title) {
-      await fetch("/api/todos", {
+      await fetch(API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

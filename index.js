@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 
 const app = express();
 const PORT = 3000;
@@ -8,8 +9,8 @@ const todoRouter = require("./routes/todo.router.js");
 const connect = require("./connection/index.js");
 connect();
 
+app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
 app.use("/api", [todoRouter]);
 
 app.get("/", (req, res) => {
