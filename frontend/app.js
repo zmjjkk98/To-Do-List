@@ -1,52 +1,168 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("todo-form");
-  const todoList = document.getElementById("todo-list");
-  const todoTitle = document.getElementById("todo-title");
+const API_URL = "http://localhost:3000/api/todos";
+const headers = {
+  "Content-Type": "application/json",
+};
 
-  const API_URL = "http://localhost:3000/api/todos";
+async function getTodoItemsFromServer() {
+  const response = await fetch(API_URL, {
+    headers,
+  });
+  const items = await response.json();
+  return items;
+}
 
-  // 서버에서 할일 목록을 불러오는 함수
-  const loadTodos = async () => {
-    const response = await fetch(API_URL);
-    const todos = await response.json();
+async function postTodoItem(title) {
+  const response = await fetch(API_URL, {
+    method: "post",
+    headers: headers,
+    body: JSON.stringify({
+      title,
+    }),
+  });
+  return response.json();
+}
 
-    // 할일 목록을 화면에 출력
-    todoList.innerHTML = "";
-    todos.forEach((todo) => {
-      const li = document.createElement("li");
-      li.textContent = todo.title;
-      const deleteButton = document.createElement("button");
-      deleteButton.textContent = "삭제";
-      deleteButton.onclick = async () => {
-        await fetch(`${API_URL}/${todo._id}`, {
-          method: "DELETE",
-        });
-        loadTodos();
-      };
-      li.appendChild(deleteButton);
-      todoList.appendChild(li);
+async function deleteTodoItem(id) {
+  const response = await fetch(`${API_URL}/${id}`, {
+    method: "delete",
+    headers: headers,
+  });
+  return response.json();
+}
+
+async function patchToggleStatusTodoItem(id) {
+  const response = await fetch(`${API_URL}/${id}`, {
+    method: "put",
+    headers: headers,
+  });
+  return response.json();
+}
+
+function addItem(item) {
+  const c = item.completed !== false ? "danger" : "";
+  const html = `<li data-id="${item._id}" class="animated flipInX ${c}">
+          <div class="checkbox">
+              <span class="close"><i class="fa fa-times"></i></span>
+              <label><span class="checkbox-mask"></span><input type="checkbox" />${item.title}</label>
+          </div>
+      </li>`;
+
+  $(".todo-list").append(html);
+  $(".no-items").addClass("hidden");
+
+  $(".form-control").val("").attr("placeholder", "✍️ Add item...");
+  setTimeout(function () {
+    $(".todo-list li").removeClass("animated flipInX");
+  }, 500);
+}
+
+function setHeaderByDay() {
+  const todayContainer = document.querySelector(".today");
+  const weekday = [
+    "Sunday 🖖",
+    "Monday 💪😀",
+    "Tuesday 😜",
+    "Wednesday 😌☕️",
+    "Thursday 🤗",
+    "Friday 🍻",
+    "Saturday 😴",
+  ];
+
+  const n = weekday[new Date().getDay()];
+  const randomWordArray = [
+    "Oh my, it's ",
+    "Whoop, it's ",
+    "Happy ",
+    "Seems it's ",
+    "Awesome, it's ",
+    "Have a nice ",
+    "Happy fabulous ",
+    "Enjoy your ",
+  ];
+
+  const randomWord =
+    randomWordArray[Math.floor(Math.random() * randomWordArray.length)];
+  todayContainer.innerHTML = randomWord + n;
+}
+
+(async () => {
+  this.todoItems = await getTodoItemsFromServer();
+
+  function syncTodoItemsWithDisplay(todoItems) {
+    $(".todo-list").html("");
+
+    todoItems.forEach((item) => {
+      addItem(item);
     });
-  };
+  }
 
-  // 할일 추가하는 함수
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const title = todoTitle.value;
+  function syncTodoItems(newtoItems) {
+    this.todoItems = [...newtoItems];
+    return () => {
+      syncTodoItemsWithDisplay(this.todoItems);
+    };
+  }
 
-    if (title) {
-      await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ title }),
-      });
+  function getTodoItemsFrom() {
+    return this.todoItems;
+  }
 
-      todoTitle.value = "";
-      loadTodos(); // 추가 후 목록 다시 불러오기
+  async function setToDone(id) {
+    try {
+      const todoItems = [...getTodoItemsFrom()];
+      const todoItemIndex = todoItems.findIndex((item) => item.id === id);
+      const updatedItem = await patchToggleStatusTodoItem(id);
+      todoItems.splice(todoItemIndex, 1, updatedItem);
+      syncTodoItems(todoItems);
+    } catch {
+      alert("처리에 실패 했습니다. 다시 시도 해 주세요");
+    }
+  }
+
+  $(".todo-list").on("click", 'input[type="checkbox"]', function () {
+    const li = $(this).parent().parent().parent();
+    li.toggleClass("danger");
+    li.toggleClass("animated flipInX");
+
+    setToDone(li.data().id);
+    setTimeout(function () {
+      li.removeClass("animated flipInX");
+    }, 500);
+  });
+
+  $(".todo-list").on("click", ".close", async function () {
+    try {
+      const box = $(this).parent().parent();
+      await deleteTodoItem(box.data().id);
+      box.removeClass("animated flipInX").addClass("animated bounceOutLeft");
+      setTimeout(function () {
+        box.remove();
+      }, 500);
+    } catch (e) {
+      alert("삭제 실패 했습니다. 다시 시도 해 주세요.");
     }
   });
 
-  // 처음 로드 시 할일 목록 불러오기
-  loadTodos();
-});
+  $(".add-btn").on("click", async function () {
+    $("#form-item").submit();
+  });
+
+  $("#form-item").on("submit", async function (e) {
+    e.preventDefault();
+    const formControl = $(".form-control").first();
+    const title = formControl.val();
+    if (!title) {
+      alert("할일을 먼저 작성 해 주세요.");
+      return false;
+    }
+    const newItem = await postTodoItem(title);
+    addItem(newItem);
+    formControl.focus();
+  });
+
+  $(".todo-list").sortable();
+  $(".todo-list").disableSelection();
+
+  setHeaderByDay();
+  syncTodoItems(todoItems)();
+})();
