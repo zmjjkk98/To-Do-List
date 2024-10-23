@@ -80,16 +80,21 @@
 .todo-list li:hover .close {
   display: block;
 }
+
 .has-feedback .fa {
   line-height: 35px;
   cursor: pointer;
   pointer-events: auto;
   z-index: 10;
-  display: block;
+  display: inline-block;
   color: #666;
   -webkit-transition: color 0.15s linear;
   transition: color 0.15s linear;
 }
+.has-feedback .fa .fa-microphone {
+  margin-right: 40px;
+}
+
 .has-feedback .fa:hover {
   color: #999;
 }
@@ -116,6 +121,9 @@
 .add-control .refresh:hover {
   color: #666;
 }
+
+
+
 .form-control,
 .form-control:focus,
 .form-control:active,

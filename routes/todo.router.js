@@ -37,7 +37,7 @@ router.put("/todos/:id", async (req, res) => {
     const updatedTodo = await todo.save();
     // const updatedTodo = await Todo.findByIdAndUpdate(
     //   id,
-    //   { completed: true || false },
+    //   { title, completed, },
     //   { new: true }
     // );
     res.json(updatedTodo);

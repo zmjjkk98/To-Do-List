@@ -3,6 +3,34 @@ const headers = {
   "Content-Type": "application/json",
 };
 
+const voiceBtn = document.getElementById("voice-btn");
+const todoTitle = document.getElementById("todo-title");
+
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = new SpeechRecognition();
+
+recognition.lang = "ko-KR";
+
+voiceBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  // e.stopPropagation(); 버블링 막기
+  recognition.start();
+});
+
+recognition.onresult = function (event) {
+  const transcript = event.results[0][0].transcript;
+  todoTitle.value = transcript;
+};
+
+recognition.onerror = function (event) {
+  console.error("Speech recognition error", event.error);
+};
+
+recognition.onspeechend = function () {
+  recognition.stop();
+};
+
 async function getTodoItemsFromServer() {
   const response = await fetch(API_URL, {
     headers,
